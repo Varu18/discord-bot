@@ -3,13 +3,13 @@ import discord
 from dotenv import load_dotenv
 from discord.ext import commands
 from discord import app_commands
+from database import add_warning, get_warnings
 
 load_dotenv()
 
 
 GUILD_ID = discord.Object(id=1545374002099527752)
 MODERATOR_ROLE_ID = 1546574166126497884
-warnings = {}
 
 
 class Client(commands.Bot):
@@ -193,22 +193,19 @@ async def warn(
         )
         return
 
-    user_id = user.id
+    add_warning(user.id, reason)
 
-    if user_id not in warnings:
-     warnings[user_id] = []
-
-    warnings[user_id].append(reason)
-
-    warning_count = len(warnings[user_id])
+    user_warnings = get_warnings(user.id)
+    warning_count = len(user_warnings)
 
     if warning_count >= 3:
-        await user.kick(reason=f'3 warnings. Ultimul motiv: {reason}')
-
-        del warnings[user_id]
+        await user.kick(
+            reason=f'3 warnings. Ultimul motiv: {reason}'
+        )
 
         await interaction.response.send_message(
-            f'👢 {user.mention} a primit al 3-lea warning și a fost dat afară.\n'
+            f'👢 {user.mention} a primit al 3-lea warning '
+            f'și a fost dat afară.\n'
             f'Ultimul motiv: {reason}'
         )
 
@@ -241,7 +238,7 @@ async def warnings_command(
         )
         return
 
-    user_warnings = warnings.get(user.id, [])
+    user_warnings = get_warnings(user.id)
 
     if not user_warnings:
         await interaction.response.send_message(
