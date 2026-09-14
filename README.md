@@ -23,24 +23,39 @@ This project is part of my programming learning process. I am using it to practi
 - Automatically kicks a member after 3 warnings
 - Moderation commands are restricted to a custom Moderator role
 - Permission checks for moderation commands
+- Moderation responses use Discord embeds
 
 ### Security
 
 - Uses environment variables to securely store the Discord bot token
 - `.env` is excluded from the Git repository using `.gitignore`
 
-## Technologies
+### Warning System
+
+Warnings are stored in a local SQLite database and persist when the bot restarts.
+
+
+### Technologies
 
 - Python
 - discord.py
 - python-dotenv
 - Git
 - GitHub
+- SQLite
 
-## Project Structure
+### Project Structure
 
-```text
 Discord Bot/
+├── docs/
+│   ├── privacy.md
+│   └── terms.md
 ├── .gitignore
+├── database.py
 ├── main.py
 └── README.md
+
+## Legal
+
+- [Terms of Service](docs/terms.md)
+- [Privacy Policy](docs/privacy.md)

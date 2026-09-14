@@ -149,13 +149,33 @@ async def kick(
         )
         return
 
-    await user.kick(reason=reason)
+   # await user.kick(reason=reason)
 
-    await interaction.response.send_message(
-        f'👢 {user.mention} a fost dat afară de pe server.\n'
-        f'Motiv: {reason}'
+    embed = discord.Embed(
+        title='👢 Member Kicked',
+        description=f'{user.mention} a fost dat afară de pe server.',
+        color=discord.Color.purple()
     )
 
+    embed.set_thumbnail(url=user.display_avatar.url)
+
+    embed.add_field(
+        name='User',
+        value=user.mention,
+        inline=True
+    )
+
+    embed.add_field(
+        name='Reason',
+        value=reason,
+        inline=False
+    )
+
+    embed.set_footer(
+        text=f'Kicked by {interaction.user.display_name}'
+    )
+
+    await interaction.response.send_message(embed=embed)
 
 @kick.error
 async def kick_error(
@@ -198,25 +218,66 @@ async def warn(
     user_warnings = get_warnings(user.id)
     warning_count = len(user_warnings)
 
+
     if warning_count >= 3:
         await user.kick(
-            reason=f'3 warnings. Ultimul motiv: {reason}'
-        )
-
-        await interaction.response.send_message(
-            f'👢 {user.mention} a primit al 3-lea warning '
-            f'și a fost dat afară.\n'
-            f'Ultimul motiv: {reason}'
-        )
-
-        return
-
-    await interaction.response.send_message(
-        f'⚠️ {user.mention} a primit un warning.\n'
-        f'Motiv: {reason}\n'
-        f'Warnings: {warning_count}/3'
+        reason=f'3 warnings. Ultimul motiv: {reason}'
     )
 
+        embed = discord.Embed(
+        title='👢 Member Kicked',
+        description=f'{user.mention} a primit al 3-lea warning și a fost dat afară.',
+        color=discord.Color.purple()
+    )
+
+        embed.add_field(
+        name='Reason',
+        value=reason,
+        inline=False
+    )
+
+        embed.set_footer(
+        text=f'Action by {interaction.user.display_name}'
+    )
+
+        await interaction.response.send_message(embed=embed)
+        return
+
+
+
+
+
+    embed = discord.Embed(
+    title='⚠️ Member Warned',
+    description=f'{user.mention} a primit un warning.',
+    color=discord.Color.purple()
+)
+
+    embed.set_thumbnail(url=user.display_avatar.url)
+
+    embed.add_field(
+    name='User',
+    value=user.mention,
+    inline=True
+)
+
+    embed.add_field(
+        name='Warnings',
+        value=f'{warning_count}/3',
+        inline=True
+    )
+
+    embed.add_field(
+        name='Reason',
+        value=reason,
+        inline=False
+    )
+
+    embed.set_footer(
+        text=f'Warned by {interaction.user.display_name}'
+    )
+
+    await interaction.response.send_message(embed=embed)
 
 @client.tree.command(
     name='warnings',
