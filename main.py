@@ -1,3 +1,4 @@
+import datetime
 import os
 import discord
 from dotenv import load_dotenv
@@ -163,7 +164,7 @@ async def kick(
         )
         return
 
-   # await user.kick(reason=reason)
+    await user.kick(reason=reason)
 
     embed = discord.Embed(
         title='👢 Member Kicked',
@@ -204,6 +205,285 @@ async def kick_error(
 
 
 
+@client.tree.command(
+    name='ban',
+    description='Banează un membru de pe server'
+)
+@app_commands.describe(
+    user='Membrul care va fi banat',
+    reason='Motivul pentru ban'
+)
+async def ban(
+    interaction: discord.Interaction,
+    user: discord.Member,
+    reason: str = 'Nu a fost specificat'
+):
+    moderator_role = interaction.guild.get_role(MODERATOR_ROLE_ID)
+
+    if moderator_role not in interaction.user.roles:
+        await interaction.response.send_message(
+            '❌ Nu ai rolul necesar pentru această comandă.',
+            ephemeral=True
+        )
+        return
+
+    await user.ban(reason=reason)
+
+    embed = discord.Embed(
+        title='🔨 Member Banned',
+        description=f'{user.mention} a fost banat de pe server.',
+        color=discord.Color.purple()
+    )
+
+    embed.set_thumbnail(url=user.display_avatar.url)
+
+    embed.add_field(
+        name='User',
+        value=user.mention,
+        inline=True
+    )
+
+    embed.add_field(
+        name='Reason',
+        value=reason,
+        inline=False
+    )
+
+    embed.set_footer(
+        text=f'Banned by {interaction.user.display_name}'
+    )
+
+    await interaction.response.send_message(embed=embed)
+
+
+
+@client.tree.command(
+    name='unban',
+    description='Debanează un utilizator de pe server'
+)
+@app_commands.describe(
+    user_id='ID-ul utilizatorului care va fi debanat',
+    reason='Motivul pentru unban'
+)
+async def unban(
+    interaction: discord.Interaction,
+    user_id: str,
+    reason: str = 'Nu a fost specificat'
+):
+    moderator_role = interaction.guild.get_role(MODERATOR_ROLE_ID)
+
+    if moderator_role not in interaction.user.roles:
+        await interaction.response.send_message(
+            '❌ Nu ai rolul necesar pentru această comandă.',
+            ephemeral=True
+        )
+        return
+
+    try:
+        user = await client.fetch_user(int(user_id))
+        await interaction.guild.unban(user, reason=reason)
+
+    except ValueError:
+        await interaction.response.send_message(
+            '❌ ID-ul utilizatorului nu este valid.',
+            ephemeral=True
+        )
+        return
+
+    except discord.NotFound:
+        await interaction.response.send_message(
+            '❌ Acest utilizator nu este banat sau nu a fost găsit.',
+            ephemeral=True
+        )
+        return
+
+    embed = discord.Embed(
+        title='🔓 Member Unbanned',
+        description=f'{user.mention} a fost debanat de pe server.',
+        color=discord.Color.purple()
+    )
+
+    embed.set_thumbnail(
+        url=user.display_avatar.url
+    )
+
+    embed.add_field(
+        name='User',
+        value=f'{user.mention}\n`{user.id}`',
+        inline=True
+    )
+
+    embed.add_field(
+        name='Reason',
+        value=reason,
+        inline=False
+    )
+
+    embed.set_footer(
+        text=f'Unbanned by {interaction.user.display_name}'
+    )
+
+    await interaction.response.send_message(
+        embed=embed
+    )
+
+
+
+@client.tree.command(
+    name='mute',
+    description='Aplică un mute temporar unui membru'
+)
+@app_commands.describe(
+    user='Membru care va primi mute',
+    duration='Durata mute-ului în minute',
+    reason='Motivul mute-ului'
+)
+async def mute(
+    interaction: discord.Interaction,
+    user: discord.Member,
+    duration: int,
+    reason: str = 'Nu a fost specificat'
+):
+    moderator_role = interaction.guild.get_role(MODERATOR_ROLE_ID)
+
+    if moderator_role not in interaction.user.roles:
+        await interaction.response.send_message(
+            '❌ Nu ai rolul necesar pentru această comandă.',
+            ephemeral=True
+        )
+        return
+
+    if duration < 1:
+        await interaction.response.send_message(
+            '❌ Durata mute-ului trebuie să fie de cel puțin 1 minut.',
+            ephemeral=True
+        )
+        return
+
+    if duration > 40320:
+        await interaction.response.send_message(
+            '❌ Durata mute-ului nu poate depăși 28 de zile (40320 minute).',
+            ephemeral=True
+        )
+        return
+
+    if user.guild_permissions.administrator:
+        await interaction.response.send_message(
+            '❌ Nu poți aplica mute unui administrator.',
+            ephemeral=True
+        )
+        return
+    
+    await interaction.response.defer(
+        ephemeral=True
+    )   
+
+    timeout_duration = datetime.timedelta(
+        minutes=duration
+        )
+
+
+    await user.timeout(
+        timeout_duration,
+        reason=reason
+    )
+
+    embed = discord.Embed(
+        title='🔇 Member Muted',
+        description=f'{user.mention} a primit mute pentru {duration} minute.',
+        color=discord.Color.purple()
+    )
+
+    embed.set_thumbnail(url=user.display_avatar.url)
+
+    embed.add_field(
+        name='User',
+        value=user.mention,
+        inline=True
+    )
+
+    embed.add_field(
+        name='Duration',
+        value=f'{duration} minute',
+        inline=True
+    )
+
+    embed.add_field(
+        name='Reason',
+        value=reason,
+        inline=False
+    )
+
+    embed.set_footer(
+        text=f'Muted by {interaction.user.display_name}'
+    )
+
+    await interaction.edit_original_response(
+        embed=embed
+        )
+
+
+
+@client.tree.command(
+    name='unmute',
+    description='Elimină mute-ul unui membru'
+)
+@app_commands.describe(
+     user='Membrul căruia îi va fi eliminat mute-ul',
+    reason='Motivul pentru eliminarea mute-ului'
+)
+async def unmute(
+    interaction: discord.Interaction,
+    user: discord.Member,
+    reason: str = 'Nu a fost specificat'
+):
+    moderator_role = interaction.guild.get_role(MODERATOR_ROLE_ID)
+
+    if moderator_role not in interaction.user.roles:
+        await interaction.response.send_message(
+            '❌ Nu ai rolul necesar pentru această comandă.',
+            ephemeral=True
+        )
+        return
+
+    await interaction.response.defer(
+        ephemeral=True
+    )
+
+    await user.timeout(
+        None,
+        reason=reason
+    )
+
+    embed = discord.Embed(
+        title='🔊 Member Unmuted',
+        description=f'Mute-ul lui {user.mention} a fost eliminat.',
+        color=discord.Color.purple()
+    )
+
+    embed.set_thumbnail(
+        url=user.display_avatar.url
+    )
+
+    embed.add_field(
+        name='User',
+        value=user.mention,
+        inline=True
+    )
+
+    embed.add_field(
+        name='Reason',
+        value=reason,
+        inline=False
+    )
+
+    embed.set_footer(
+        text=f'Unmuted by {interaction.user.display_name}'
+    )
+
+    await interaction.edit_original_response(
+        embed=embed
+    )
 
 @client.tree.command(
     name='warn',
@@ -364,7 +644,11 @@ async def help_command(
             '`/clear` - Șterge mesaje\n'
             '`/kick` - Dă afară un membru\n'
             '`/warn` - Avertizează un membru\n'
-            '`/warnings` - Vezi warningurile unui membru'
+            '`/warnings` - Vezi warningurile unui membru\n'
+            '`/ban` - Banează un membru de pe server\n'
+            '`/unban` - Debanează un membru de pe server\n'
+            '`/mute` - Dai mute unui membru pentru un anumit timp\n'
+            '`/unmute` - Elimină mute-ul unui membru\n'
             ),
             inline=False
         )
