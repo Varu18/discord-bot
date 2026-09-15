@@ -4,7 +4,7 @@ import discord
 from dotenv import load_dotenv
 from discord.ext import commands
 from discord import app_commands
-from database import add_warning, get_warnings
+from database import add_warning, get_warnings, remove_warning
 
 load_dotenv()
 
@@ -572,6 +572,74 @@ async def warn(
     )
 
     await interaction.response.send_message(embed=embed)
+
+
+@client.tree.command(
+    name='unwarn',
+    description='Elimină un warning unui membru'
+)
+@app_commands.describe(
+    user='Membrul căruia îi va fi eliminat warning-ul',
+    reason='Motivul pentru eliminarea warning-ului'
+)
+async def unwarn(
+    interaction: discord.Interaction,
+    user: discord.Member,
+    reason: str = 'Nu a fost specificat'
+):
+    moderator_role = interaction.guild.get_role(MODERATOR_ROLE_ID)
+
+    if moderator_role not in interaction.user.roles:
+        await interaction.response.send_message(
+            '❌ Nu ai rolul necesar pentru această comandă.',
+            ephemeral=True
+        )
+        return
+
+    removed = remove_warning(user.id)
+
+    if removed == 0:
+        await interaction.response.send_message(
+            f'❌ {user.mention} nu are warninguri de eliminat.',
+            ephemeral=True
+        )
+        return
+
+    user_warnings = get_warnings(user.id)
+    warning_count = len(user_warnings)
+
+    embed = discord.Embed(
+        title='✅ Warning Removed',
+        description=f'Un warning a fost eliminat pentru {user.mention}.',
+        color=discord.Color.purple()
+    )
+
+    embed.set_thumbnail(url=user.display_avatar.url)
+
+    embed.add_field(
+        name='User',
+        value=user.mention,
+        inline=True
+    )
+
+    embed.add_field(
+        name='Warnings',
+        value=f'{warning_count}/3',
+        inline=True
+    )
+
+    embed.add_field(
+        name='Reason',
+        value=reason,
+        inline=False
+    )
+
+    embed.set_footer(
+        text=f'Unwarned by {interaction.user.display_name}'
+    )
+
+    await interaction.response.send_message(embed=embed)
+
 
 @client.tree.command(
     name='warnings',

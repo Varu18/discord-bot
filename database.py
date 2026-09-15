@@ -44,3 +44,28 @@ def get_warnings(user_id):
     connection.close()
 
     return results
+
+def remove_warning(user_id):
+    connection = sqlite3.connect('warnings.db')
+    cursor = connection.cursor()
+
+    cursor.execute(
+        """
+        DELETE FROM warnings
+        WHERE id = (
+            SELECT id
+            FROM warnings
+            WHERE user_id = ?
+            ORDER BY id DESC
+            LIMIT 1
+        )
+        """,
+        (user_id,)
+    )
+
+    removed = cursor.rowcount
+
+    connection.commit()
+    connection.close()
+
+    return removed
