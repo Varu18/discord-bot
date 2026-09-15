@@ -766,6 +766,82 @@ async def coinflip(interaction: discord.Interaction):
 
 
 @client.tree.command(
+    name='roast',
+    description='Cuvinte picante unui membru al serverului'
+)
+@app_commands.describe(
+    user='Membrul căruia vrei să îi faci roast'
+)
+async def roast(
+    interaction: discord.Interaction,
+    user: discord.Member
+):
+
+    roasts = [
+        'Are nevoie de tutorial ca să folosească Discord. 💀',
+        'Are atât de multă experiență pe Discord și tot nu știe ce face. 😭',
+        'Dacă inteligența ar fi XP, ar fi încă la Level 1. 💀',
+        'Internetul lui este mai rapid decât reacțiile lui. 🐌',
+        'A intrat pe Discord pentru 5 minute și au trecut 6 ore. 🎮',
+        'Are mai multe scuze decât victorii. 😭',
+        'Aim-ul lui are nevoie de un update. 🎯',
+        'Dacă ar exista un rank pentru stat degeaba, ar fi top 1. 🏆',
+        'PC-ul lui probabil încă încearcă să proceseze ultima decizie. 💀',
+        'Nu spun că are ghinion, dar nici moneda nu vrea să stea cu el. 🪙',
+        'Are nevoie de Wi-Fi chiar și pentru a avea idei. 📡',
+        'A pierdut argumentul înainte să înceapă. 😭',
+        'Are 100% confidence și 0% skill. 💀',
+        'Dacă procrastinarea era sport olimpic, avea medalie de aur. 🥇',
+        'Discord-ul îl vede online și deja știe că urmează haosul. 💀'
+    ]
+
+    roast_result = random.choice(roasts)
+
+    embed = discord.Embed(
+        title='🔥 Roast Machine',
+        description=(
+            f'{user.mention}\n\n'
+            f'**"{roast_result}"**'
+        ),
+        color=discord.Color.purple()
+    )
+
+    embed.set_thumbnail(
+        url=user.display_avatar.url
+    )
+
+    embed.add_field(
+        name='🎯 Target',
+        value=f'{user.mention}',
+        inline=True
+    )
+
+    embed.add_field(
+        name='🔥 Roast Level',
+        value=f'{random.randint(1, 10)}/10',
+        inline=True
+    )
+
+    embed.set_footer(
+        text=f'Roasted by {interaction.user.display_name}'
+    )
+
+    await interaction.response.send_message(
+        embed=embed
+    )
+
+    await send_mod_log(
+        interaction=interaction,
+        action='🔥 Roast',
+        user=user,
+        reason='Roast command used',
+        extra=(
+            f'Roasted by: {interaction.user.mention}\n'
+            f'Result: {roast_result}'
+        )
+    )
+
+@client.tree.command(
     name='warn',
     description='Avertizează un membru'
 )
@@ -1059,12 +1135,14 @@ async def help_command(
             inline=False
         )
         embed.add_field(
-            name='👀 Fun',
+            name='🎮 Fun',
             value=(
             '`/fortune` - Ți-se prezice viitorul apropiat\n'
             '`/rate` - Botul "evaluează aleator utilizatorul"\n'
             '`/coinflip` - Nu e nevoie de descriere\n'
-            )
+            '`/roast` - Roast unui membru al serverului'
+            ),
+            inline=False
         )
 
         embed.set_footer(

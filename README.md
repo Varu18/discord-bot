@@ -38,6 +38,7 @@ This project is part of my programming learning process. I am using it to practi
 - `/fortune` "predicts" your future
 - `/rate` bot rates an user using score
 - `/coinflip` clasic
+- `/roast` bot roasts a server member
 
 ### Security
 
