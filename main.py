@@ -83,6 +83,7 @@ async def ping(interaction: discord.Interaction):
     )
 
 
+
 @client.tree.command(
     name='clear',
     description='Șterge un număr specificat de mesaje'
@@ -104,13 +105,26 @@ async def clear(
         )
         return
 
+    await interaction.response.defer(
+        ephemeral=True
+    )
+
     deleted = await interaction.channel.purge(
         limit=num_messages
     )
 
-    await interaction.response.send_message(
-        f'✅ Am șters {len(deleted)} mesaje.',
-        ephemeral=True
+    embed = discord.Embed(
+        title='🧹 Messages Cleared',
+        description=f'Am șters {len(deleted)} mesaje din acest canal.',
+        color=discord.Color.purple()
+    )
+
+    embed.set_footer(
+        text=f'Cleared by {interaction.user.display_name}'
+    )
+
+    await interaction.edit_original_response(
+        embed=embed
     )
 
 
@@ -321,6 +335,46 @@ async def warnings_command(
 
 
 
+@client.tree.command(
+        name='help',
+        description='Afișează lista de comenzi disponibile'
+    )
+async def help_command(
+        interaction: discord.Interaction
+    ):
+        embed = discord.Embed(
+            title='📜 VRU Bot - Help',
+            description='Lista comenzilor disponibile:',
+            color=discord.Color.purple()
+        )
+
+        embed.add_field(
+            name='🔧 General',
+            value=(
+            '`/salut` - Salută botul\n'
+            '`/ping` - Verifică latența botului\n'
+            '`/help` - Afișează acest meniu'
+            ),
+            inline=False
+        )
+
+        embed.add_field(
+            name='🛡️ Moderation',
+             value=(
+            '`/clear` - Șterge mesaje\n'
+            '`/kick` - Dă afară un membru\n'
+            '`/warn` - Avertizează un membru\n'
+            '`/warnings` - Vezi warningurile unui membru'
+            ),
+            inline=False
+        )
+
+        embed.set_footer(
+            text=f'Requested by {interaction.user.display_name}'
+        )
+
+        await interaction.response.send_message(
+            embed=embed)
 
 
 
