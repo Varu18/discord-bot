@@ -594,6 +594,8 @@ async def unmute(
     )
 
 
+#FUN COMMANDS
+
 @client.tree.command(
     name='fortune',
     description='Află ce îți rezervă viitorul'
@@ -611,7 +613,7 @@ async def fortune(interaction: discord.Interaction):
         "✨ O veste bună te așteaptă în curând."
         "🔮 Ceva neașteptat urmează să se întâmple."
         "💀 Astăzi nu este ziua ta. Mai încearcă mâine."
-        "🧠 ZVei avea succes, dar trebuie să ai răbdare."
+        "🧠 Vei avea succes, dar trebuie să ai răbdare."
         "👀 Ai grijă la următoarea decizie.."
         "😌 Cel mai bun lucru pe care îl poți face astăzi este să nu te stresezi."  
         "🎮 Universul spune că ar trebui să mai joci un meci."
@@ -647,6 +649,121 @@ async def fortune(interaction: discord.Interaction):
         reason='Fortune command used',
         extra=f'Result: {fortune_result}'
     )
+
+
+@client.tree.command(
+    name='rate',
+    description='Evaluează un membru al serverului'
+)
+@app_commands.describe(
+    user='Membrul pe care vrei să îl evaluezi'
+)
+async def rate(
+    interaction: discord.Interaction,
+    user: discord.Member
+):
+
+    rating = random.randint(1, 100)
+
+    if rating >= 90:
+        comment = 'Absolut legendar. 🔥'
+    elif rating >= 75:
+        comment = 'Foarte bun. 😎'
+    elif rating >= 50:
+        comment = 'Destul de decent. 👍'
+    elif rating >= 30:
+        comment = 'Mai ai de muncă. 💀'
+    else:
+        comment = 'Mai bine nu întrebăm de ce. 💀'
+
+    embed = discord.Embed(
+        title='📊 User Rating',
+        description=(
+            f'{user.mention}\n\n'
+            f'⭐ **Rating: {rating}/100**\n\n'
+            f'**Verdict:**\n'
+            f'{comment}'
+        ),
+        color=discord.Color.purple()
+    )
+
+    embed.set_thumbnail(
+        url=user.display_avatar.url
+    )
+
+    embed.add_field(
+        name='👤 User',
+        value=f'{user.mention}\n`{user.id}`',
+        inline=True
+    )
+
+    embed.add_field(
+        name='⭐ Rating',
+        value=f'{rating}/100',
+        inline=True
+    )
+
+    embed.set_footer(
+        text=f'Rated by {interaction.user.display_name}'
+    )
+
+    await interaction.response.send_message(
+        embed=embed
+    )
+
+    await send_mod_log(
+        interaction=interaction,
+        action='📊 Rate',
+        user=user,
+        reason='Rate command used',
+        extra=(
+            f'Rated by: {interaction.user.mention}\n'
+            f'Rating: {rating}/100'
+        )
+    )
+
+
+
+@client.tree.command(
+    name='coinflip',
+    description='Aruncă o monedă'
+)
+async def coinflip(interaction: discord.Interaction):
+
+    result = random.choice(['HEADS', 'TAILS'])
+
+    if result == 'HEADS':
+        emoji = '🪙'
+        result_text = 'HEADS'
+    else:
+        emoji = '🪙'
+        result_text = 'TAILS'
+
+    embed = discord.Embed(
+        title='🪙 Coin Flip',
+        description=(
+            f'{interaction.user.mention} a aruncat moneda.\n\n'
+            f'{emoji} **{result_text}**'
+        ),
+        color=discord.Color.purple()
+    )
+
+    embed.set_footer(
+        text=f'Flipped by {interaction.user.display_name}'
+    )
+
+    await interaction.response.send_message(
+        embed=embed
+    )
+
+    await send_mod_log(
+        interaction=interaction,
+        action='🪙 Coin Flip',
+        user=interaction.user,
+        reason='Coinflip command used',
+        extra=f'Result: {result_text}'
+    )
+
 
 @client.tree.command(
     name='warn',
@@ -940,6 +1057,14 @@ async def help_command(
             '`/unmute` - Elimină mute-ul unui membru\n'
             ),
             inline=False
+        )
+        embed.add_field(
+            name='👀 Fun',
+            value=(
+            '`/fortune` - Ți-se prezice viitorul apropiat\n'
+            '`/rate` - Botul "evaluează aleator utilizatorul"\n'
+            '`/coinflip` - Nu e nevoie de descriere\n'
+            )
         )
 
         embed.set_footer(
