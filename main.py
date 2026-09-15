@@ -1,5 +1,6 @@
 import datetime
 import os
+import random
 import discord
 from dotenv import load_dotenv
 from discord.ext import commands
@@ -592,6 +593,61 @@ async def unmute(
         embed=embed
     )
 
+
+@client.tree.command(
+    name='fortune',
+    description='Află ce îți rezervă viitorul'
+)
+async def fortune(interaction: discord.Interaction):
+    fortunes = [
+        "🔮 Viitorul tău arată luminos!",
+        "🌟 O oportunitate neașteptată se apropie.",
+        "💫 Astrele spun că astăzi este ziua ta norocoasă.",
+        "🌙 Ascultă-ți intuiția, te va ghida corect.",
+        "✨ Un prieten apropiat îți va aduce vești bune.",
+        "🌈 Curajul tău va fi răsplătit în curând.",
+        "🪐 O schimbare pozitivă este pe drum.",
+        "🍀 Astăzi vei avea noroc."
+        "✨ O veste bună te așteaptă în curând."
+        "🔮 Ceva neașteptat urmează să se întâmple."
+        "💀 Astăzi nu este ziua ta. Mai încearcă mâine."
+        "🧠 ZVei avea succes, dar trebuie să ai răbdare."
+        "👀 Ai grijă la următoarea decizie.."
+        "😌 Cel mai bun lucru pe care îl poți face astăzi este să nu te stresezi."  
+        "🎮 Universul spune că ar trebui să mai joci un meci."
+    ]
+
+    fortune_result = random.choice(fortunes)
+
+    embed = discord.Embed(
+        title='🔮 Fortune',
+        description=(
+            f'{interaction.user.mention}, viitorul tău spune:\n\n'
+            f'**"{fortune_result}"**'
+        ),
+        color=discord.Color.purple()
+    )
+
+    embed.set_thumbnail(
+        url=interaction.user.display_avatar.url
+    )
+
+    embed.set_footer(
+        text=f'Requested by {interaction.user.display_name}'
+    )
+
+    await interaction.response.send_message(
+        embed=embed
+    )
+
+    await send_mod_log(
+        interaction=interaction,
+        action='🔮 Fortune',
+        user=interaction.user,
+        reason='Fortune command used',
+        extra=f'Result: {fortune_result}'
+    )
+
 @client.tree.command(
     name='warn',
     description='Avertizează un membru'
@@ -806,7 +862,7 @@ async def warnings_command(
 
         await interaction.response.send_message(
             embed=embed,
-            emphemeral=True
+            ephemeral=True
             )
         return
 
