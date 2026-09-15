@@ -32,6 +32,13 @@ This project is part of my programming learning process. I am using it to practi
 - Moderation responses use Discord embeds
 - Sends moderation logs to a private moderation channel
 
+
+### Fun commands
+
+- `/fortune` "predicts" your future
+- `/rate` bot rates an user using score
+- `/coinflip` clasic
+
 ### Security
 
 - Uses environment variables to securely store the Discord bot token
@@ -66,7 +73,7 @@ Logged actions include:
 - Mute
 - Unmute
 
-Each log contains information such as the action, affected user, moderator, reason, and additional details when applicable.
+Each log contains information such as the action, affected user, moderator, reason, and additional details when applicable. Also fun commands are included in logs.
 
 
 ### Technologies
