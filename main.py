@@ -11,6 +11,7 @@ load_dotenv()
 
 GUILD_ID = discord.Object(id=1545374002099527752)
 MODERATOR_ROLE_ID = 1546574166126497884
+MOD_LOG_CHANNEL_ID = 1549351665176412182
 
 
 class Client(commands.Bot):
@@ -61,6 +62,67 @@ client = Client(
     intents=intents
 )
 
+async def send_mod_log(
+    interaction: discord.Interaction,
+    action: str,
+    user: discord.abc.User,
+    reason: str,
+    extra: str = None
+):
+    channel = interaction.guild.get_channel(
+        MOD_LOG_CHANNEL_ID
+    )
+
+    if channel is None:
+        return
+
+    embed = discord.Embed(
+        title='🛡️ Moderation Log',
+        color=discord.Color.purple()
+    )
+
+    embed.add_field(
+        name='Action',
+        value=action,
+        inline=True
+    )
+
+    embed.add_field(
+        name='User',
+        value=f'{user.mention}\n`{user.id}`',
+        inline=True
+    )
+
+    embed.add_field(
+        name='Moderator',
+        value=f'{interaction.user.mention}\n`{interaction.user.id}`',
+        inline=True
+    )
+
+    embed.add_field(
+        name='Reason',
+        value=reason,
+        inline=False
+    )
+
+    if extra:
+        embed.add_field(
+            name='Details',
+            value=extra,
+            inline=False
+        )
+
+    embed.set_thumbnail(
+        url=user.display_avatar.url
+    )
+
+    embed.set_footer(
+        text=f'{interaction.guild.name}'
+    )
+
+    await channel.send(
+        embed=embed
+    )
 
 @client.tree.command(
     name='salut',
@@ -114,6 +176,14 @@ async def clear(
         limit=num_messages
     )
 
+    await send_mod_log(
+    interaction=interaction,
+    action='🧹 Clear',
+    user=interaction.user,
+    reason='Messages cleared',
+    extra=f'Deleted messages: {len(deleted)}'
+)
+
     embed = discord.Embed(
         title='🧹 Messages Cleared',
         description=f'Am șters {len(deleted)} mesaje din acest canal.',
@@ -165,6 +235,13 @@ async def kick(
         return
 
     await user.kick(reason=reason)
+
+    await send_mod_log(
+    interaction=interaction,
+    action='👢 Kick',
+    user=user,
+    reason=reason
+)
 
     embed = discord.Embed(
         title='👢 Member Kicked',
@@ -229,6 +306,13 @@ async def ban(
 
     await user.ban(reason=reason)
 
+    await send_mod_log(
+    interaction=interaction,
+    action='🔨 Ban',
+    user=user,
+    reason=reason
+)
+
     embed = discord.Embed(
         title='🔨 Member Banned',
         description=f'{user.mention} a fost banat de pe server.',
@@ -282,6 +366,13 @@ async def unban(
     try:
         user = await client.fetch_user(int(user_id))
         await interaction.guild.unban(user, reason=reason)
+
+        await send_mod_log(
+            interaction=interaction,
+            action='🔓 Unban',
+            user=user,
+            reason=reason
+        )
 
     except ValueError:
         await interaction.response.send_message(
@@ -388,6 +479,14 @@ async def mute(
         reason=reason
     )
 
+    await send_mod_log(
+    interaction=interaction,
+    action='🔇 Mute',
+    user=user,
+    reason=reason,
+    extra=f'Duration: {duration} minutes'
+)
+
     embed = discord.Embed(
         title='🔇 Member Muted',
         description=f'{user.mention} a primit mute pentru {duration} minute.',
@@ -455,6 +554,14 @@ async def unmute(
         reason=reason
     )
 
+    await send_mod_log(
+        interaction=interaction,
+        action='🔊 Unmute',
+        user=user,
+        reason=reason,
+        extra='Mute removed'
+    )
+
     embed = discord.Embed(
         title='🔊 Member Unmuted',
         description=f'Mute-ul lui {user.mention} a fost eliminat.',
@@ -511,6 +618,19 @@ async def warn(
 
     user_warnings = get_warnings(user.id)
     warning_count = len(user_warnings)
+
+    if warning_count >= 3:
+        log_action = '⚠️ Warn + 👢 Automatic Kick'
+    else:
+        log_action = '⚠️ Warn'
+
+    await send_mod_log(
+        interaction = interaction,
+        action=log_action,
+        user=user,
+        reason=reason,
+        extra=f'Warnings: {warning_count}/3'
+    )
 
 
     if warning_count >= 3:
@@ -608,6 +728,14 @@ async def unwarn(
     user_warnings = get_warnings(user.id)
     warning_count = len(user_warnings)
 
+    await send_mod_log(
+    interaction=interaction,
+    action='⚠️ Warning Removed',
+    user=user,
+    reason=reason,
+    extra=f'Warnings: {warning_count}/3'
+)
+
     embed = discord.Embed(
         title='✅ Warning Removed',
         description=f'Un warning a fost eliminat pentru {user.mention}.',
@@ -664,23 +792,59 @@ async def warnings_command(
     user_warnings = get_warnings(user.id)
 
     if not user_warnings:
-        await interaction.response.send_message(
-            f'✅ {user.mention} nu are niciun warning.',
-            ephemeral=True
+        embed = discord.Embed(
+            title='⚠️ Warnings',
+            description=f'{user.mention} nu are niciun warning.',
+            color=discord.Color.purple()
         )
+        embed.set_thumbnail(
+                url=user.display_avatar.url
+            )
+        embed.set_footer(
+            text=f'Requested by {interaction.user.display_name}'
+        )
+
+        await interaction.response.send_message(
+            embed=embed,
+            emphemeral=True
+            )
         return
 
-    warning_list = '\n'.join(
-        f'{index}. {reason}'
+    warnings_list = '\n'.join(
+        f'{index}. {reason[0]}'
         for index, reason in enumerate(user_warnings, start=1)
     )
 
-    await interaction.response.send_message(
-        f'⚠️ Warnings pentru {user.mention}\n\n'
-        f'{warning_list}\n\n'
-        f'Total: {len(user_warnings)}/3'
+    embed = discord.Embed(
+        title='⚠️ Warnings',
+        description=f'Lista warning-urilor pentru {user.mention}:',
+        color=discord.Color.purple()
     )
-
+    embed.set_thumbnail(
+        url=user.display_avatar.url
+    )
+    embed.add_field(
+        name='👤 User',
+        value=f'{user.mention}\n`{user.id}`',
+        inline=True
+    )
+    embed.add_field(
+        name='⚠️ Total Warnings',
+        value=f'{len(user_warnings)}/3',
+        inline=True
+    )
+    embed.add_field(
+        name='📋 Warning List',
+        value=warnings_list,
+        inline=False
+    )
+    embed.set_footer(
+        text=f'Requested by {interaction.user.display_name}'
+    )
+    await interaction.response.send_message(
+        embed=embed,
+        ephemeral=True
+    )
 
 
 @client.tree.command(
@@ -712,6 +876,7 @@ async def help_command(
             '`/clear` - Șterge mesaje\n'
             '`/kick` - Dă afară un membru\n'
             '`/warn` - Avertizează un membru\n'
+            '`/unwarn` - Elimină un warning de la un membru\n'
             '`/warnings` - Vezi warningurile unui membru\n'
             '`/ban` - Banează un membru de pe server\n'
             '`/unban` - Debanează un membru de pe server\n'
